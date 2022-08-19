@@ -1,6 +1,36 @@
 const invoices = require("../invoices.json");
 const plays = require("../plays.json");
 function statement(invoice, plays) {
+  // aPerformance를 통해 play 를 얻으므로
+  // amountFor 내부에서 다시 계산도 가능하다
+  function playFor(aPerformance) {
+    return plays[aPerformance.playID];
+  }
+  // perf -> aPerformance
+  // 매개변수가 역할이 뚜렷하지 않은 경우 부정관사(a/an)를 붙임
+  function amountFor(aPerformance) {
+    // statement 함수 내부에서 선언된 amountFor에서 playFor 를 직접 호출가능해서 play 매개변수 재거
+    let result = 0;
+    switch (playFor(aPerformance).type) {
+      case "tragedy": // 비극
+        result = 40000;
+        if (aPerformance.audience > 30) {
+          result += 1000 * (aPerformance.audience - 30);
+        }
+        break;
+      case "comedy": // 희극
+        result = 30000;
+        if (aPerformance.audience > 20) {
+          result += 10000 + 500 * (aPerformance.audience - 20);
+        }
+        result += 300 * aPerformance.audience;
+        break;
+      default:
+        throw new Error(`알 수 없는 장르: ${playFor(aPerformance).type}`);
+    }
+    return result;
+  }
+
   let totalAmount = 0;
   let volumeCredits = 0;
   let result = `청구 내역 (고객명: ${invoice.customer})\n`;
@@ -11,41 +41,26 @@ function statement(invoice, plays) {
   }).format;
 
   for (let perf of invoice.performances) {
-    const play = plays[perf.playID];
-    let thisAmount = amountFor(perf, play);
+    // const play = playFor(perf);
+    // 임시 변수에 굳이 담지않고 바로 매개변수로 넘겨줌
+    // let thisAmount = amountFor(perf, playFor(perf));
+
+    // amountFor 내부에서 play를 추출할수 있으므로 매개변수 제거
+    let thisAmount = amountFor(perf);
 
     // 포인트 적립한다.
     volumeCredits += Math.max(perf.audience - 30, 0);
     // 희극 관객 5명마다 추가 포인트를 제공한다.
-    if ("comedy" === play.type) volumeCredits += Math.floor(perf.audience / 5);
+    if ("comedy" === playFor(perf).type) volumeCredits += Math.floor(perf.audience / 5);
 
     //청구 내역을 출력한다.
-    result += ` ${play.name}: ${format(thisAmount / 100)} (${perf.audience}석)\n`;
+    result += ` ${playFor(perf).name}: ${format(thisAmount / 100)} (${perf.audience}석)\n`;
     totalAmount += thisAmount;
   }
   result += `총액: ${format(totalAmount / 100)}\n`;
   result += `적립 포인트: ${volumeCredits}점\n`;
   return result;
+
 }
-function amountFor(perf, play) { 
-  let thisAmount = 0;
-    switch (play.type) {
-      case "tragedy": // 비극
-        thisAmount = 40000;
-        if (perf.audience > 30) {
-          thisAmount += 1000 * (perf.audience - 30);
-        }
-        break;
-      case "comedy": // 희극
-        thisAmount = 30000;
-        if (perf.audience > 20) {
-          thisAmount += 10000 + 500 * (perf.audience - 20);
-        }
-        thisAmount += 300 * perf.audience;
-        break;
-      default:
-        throw new Error(`알 수 없는 장르: ${play.type}`);
-    }
-  return thisAmount;
-}
+
 console.log(statement(invoices[0], plays));
