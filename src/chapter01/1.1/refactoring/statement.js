@@ -39,28 +39,26 @@ function statement(invoice, plays) {
     }
     return result;
   }
-  let totalAmount = 0;
-  let volumeCredits = 0;
-  let result = `청구 내역 (고객명: ${invoice.customer})\n`;
-  const format = new Intl.NumberFormat("en-US", {
+  function usd(aNumber) { 
+    return  new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
     minimumFractionDigits: 2,
-  }).format;
+  }).format(aNumber / 100);
+  }
+  let totalAmount = 0;
+  let volumeCredits = 0;
+  let result = `청구 내역 (고객명: ${invoice.customer})\n`;  
 
   for (let perf of invoice.performances) {    
-    // 지역 변수 제거 
-    // 스코프를 신경써야 할 대상이 줄어듬 
-    // let thisAmount = amountFor(perf);
-
     // 포인트 적립한다.
     volumeCredits += volumeCreditsFor(perf);
 
     //청구 내역을 출력한다.
-    result += ` ${playFor(perf).name}: ${format(amountFor(perf) / 100)} (${perf.audience}석)\n`;
+    result += ` ${playFor(perf).name}: ${usd(amountFor(perf))} (${perf.audience}석)\n`;
     totalAmount += amountFor(perf);
   }
-  result += `총액: ${format(totalAmount / 100)}\n`;
+  result += `총액: ${usd(totalAmount)}\n`;
   result += `적립 포인트: ${volumeCredits}점\n`;
   return result;
 
