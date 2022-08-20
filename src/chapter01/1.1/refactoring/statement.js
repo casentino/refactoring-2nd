@@ -1,6 +1,11 @@
 const invoices = require("../invoices.json");
 const plays = require("../plays.json");
+
 function statement(invoice, plays) {
+  return renderPlainText(invoice, plays);
+}
+
+function renderPlainText(invoice, plays) {
   // aPerformance를 통해 play 를 얻으므로
   // amountFor 내부에서 다시 계산도 가능하다
   function playFor(aPerformance) {
